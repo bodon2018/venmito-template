@@ -4,9 +4,9 @@
 
 Venmito came to us with a problem of fragmented data spread across five source files in four formats. I analyzed the data, developed a set of recommendations, and implemented a solution that consolidated their fragmented data into a single PostgreSQL database, with insights derived from it and served through two web views, one for non-technical staff and one for the technical team.
 
-Tools used for analysis, design, and implementation: VS Code, Python, Jupyter Notebook, pen and paper for sketching system design, and AI-assisted development and frontend design via Claude Design and Claude AI (Sonnet and Opus -Low Effort).
+Tools used for analysis, design, and implementation: VS Code, Python, Jupyter Notebook, pen and paper for sketching system design, Github, and AI-assisted development and frontend design via Claude Design and Claude AI (Sonnet and Opus -Low Effort).
 
-Recommendations: 
+Recommendations: venmito-template/recommendations/recommendationsVenmito.pdf
 
 Live Solution: https://venmito-hb-interview.vercel.app/
 
@@ -33,7 +33,7 @@ every token issued from it.
 
 ---
 
-## 1. Diagnostics 
+## 1. Diagnostics (recommendations/diagnostics)
 
 I first reviewed the data files manually, then constructed a Jupyter notebook to confirm the identified problems. The notebooks are in the `recommendations/diagnostics/` folder, and system design decisions are based on the findings from these analyses.
 
@@ -44,9 +44,9 @@ I first reviewed the data files manually, then constructed a Jupyter notebook to
 | `data_cleaning.ipynb` | Addresses the six findings. I decided not to delete questionable data but to flag it instead. This decision is based on the assumption that, as a member of the technical team at Venmito, I would want to investigate any anomalies rather than simply delete data that does not conform to the rest. |
 | `data_analysis.ipynb` | Here I conducted exploratory analysis and visualizations, plus statistical tests of the patterns found. This is meant to provide Venmito with insights to help them better understand their clientele and transaction trends. |
 
-The results from my analysis are not included in the repository, but you would get the same results by running the notebooks in listed order (diagnostics → cleaning → analysis). 
+The results from my analysis are not included in the repository, but you would get the same results by running the notebooks in listed order (diagnostics → cleaning → analysis). The recommendations are summarized in the PDF file `recommendations/recommendationsVenmito.pdf`, which is also included in this repository. Additionally, figures folder contains the visualizations in the PDF as well as other visualizations that are important to the analysis but were not included in the PDF.
 
-### Identified problems in the provided data
+### Identified problems in the provided data (recommendations/raw_data)
 
 - **People are split across two files with incompatible schemas.** `people.json`
   and `people.yml` overlap on 228 ids; the union is 1002 people. Neither file is
@@ -129,7 +129,7 @@ headlines are generated from the computed values, not written by hand.
 | Frontend | Plain JavaScript, ES modules | No build step. The design has no class system and no framework idioms, so a framework would add weight and at it is not needed at this stage |
 | Charts | None — inline SVG | Datasets are 5–28 points. `charts.js` computes polyline coordinates and bar widths directly; a chart library would bring its own opinions about axes and colour |
 | Notebooks | Standard library, then pandas | Diagnostics use no dependencies so the parsing can be audited; cleaning and analysis use pandas, matplotlib, scipy, statsmodels |
-| Hosting | Vercel | Frontend and API deploy together from one repo |
+| Hosting | Vercel | Frontend and API deploy together from one repo|
 
 ---
 
@@ -332,36 +332,26 @@ api/             Vercel entry point
 
 The technical view currently reads: it shows flagged records, load history, the
 quarantine queue, and can send requests to any endpoint. It does not let anyone
-write to or query the database freely, and that is a deliberate omission rather
-than an unfinished feature.
+write to or query the database freely, and that is a deliberate omission for now.
 
 **The app has no authentication.** It is served from a public URL, so a SQL
 console or a delete button would be available to anyone who found the address.
-Shipping that would be worse than not shipping it. Supporting it properly needs,
+Shipping such features would be unsafe. Supporting it properly needs,
 in order:
 
 1. **An access gate.** A shared code exchanged for a signed token, enforced by
    middleware on every API route — not only on the page, since the endpoints are
-   reachable directly. Roughly an hour's work and it solves casual access.
+   reachable directly. 
 2. **A read-only database role.** A separate Postgres role with `SELECT` only on
    `clean` and `ops`, plus a statement timeout and a row cap. Enforcement belongs
    in the database, not in code that scans SQL strings for dangerous keywords —
-   that check is trivially bypassed. This matters because a shared code will
-   eventually leak, and the difference between "they can read data" and "they can
-   drop tables" is worth the extra work.
+   that check is trivially bypassed. 
 3. **Soft delete rather than hard delete.** Removing questionable records should
    set an `excluded_by_user` flag with who and why, not issue a `DELETE`. The
    analysis layer already filters on flags, so the practical outcome is identical
    — the records leave the figures — while the evidence survives. This also keeps
    the choice consistent with the rest of the system, where nothing is destroyed.
-4. **Export endpoints.** CSV per entity, streamed. Straightforward once the gate
-   exists; without it, it is a one-click download of every client's name, email,
-   phone and date of birth.
 
-A shared code plus a read-only role is the right landing point for an internal
-tool. Per-user identity would be the next step after that — with one shared
-code, an audit trail records that *somebody with the code* deleted a record, not
-who, which is thin justification for a destructive action.
 
 ### For non-technical team members — interactive and forward-looking
 
@@ -378,10 +368,8 @@ The current view answers "what happened". Two additions would let it answer
    payment behaviour changes. That turns the tool from a report into something
    the business can plan against.
 
-The honest caveat on the second point: the current data does not support
-prediction. No promotion effect survives significance testing once a record
-planted in the source files is excluded, and a cross-validated model scores
-barely better than a coin flip. Any projection built today would be arithmetic
+Nonetheless the current data does not support
+prediction. Any projection built today would be arithmetic
 on assumptions the user supplies, and should be labelled as such rather than
 presented as a forecast. Real forecasting needs more data — and variables the
 source files do not contain, such as offer terms, discount depth and contact
@@ -408,7 +396,7 @@ running as a serverless function, and files uploaded through a browser. For scal
 ### The fixes, in the order they would be needed
 
 **1. Containerize the API and move it off serverless.** A `Dockerfile` around
-the existing FastAPI app, deployed to Cloud Run, ECS or Fly. This alone removes
+the existing FastAPI app, deployed to Cloud Run, ECS or Fly. This removes
 the timeout, the body-size cap and the cold starts, and restores a real
 connection pool — the serverless `NullPool` branch in `db/session.py` exists
 only because of the current host. Nothing in the application code changes.
@@ -436,19 +424,11 @@ naturally.
 
 **5. Split the database roles and reads.** A writer role for ingestion, a
 read-only role for analysis and any future SQL console, and a read replica once
-analyst queries start competing with ingest. Partition `transfers` and
-`transaction_items` by date once they pass tens of millions of rows — the
-queries are already date-filtered, so partition pruning would apply directly.
+analyst queries start competing with ingest. 
 
 **6. Operational maturity.** Migrations move from hand-run SQL files to Alembic
-so they version and roll back. The 36 tests run in CI on every push. Structured
-logging with the load id as a correlation id, plus metrics on rows ingested,
-quarantine rate and query latency — the quarantine rate in particular is the
-signal that an upstream format has changed.
+so they version and roll back.
 
-**7. Access and tenancy.** Authentication (section 9) becomes mandatory rather
-than advisable, and if Venmito ever serves more than one business unit, a
-tenant id on every table with row-level security enforcing it.
 
 ### What would not need to change
 
