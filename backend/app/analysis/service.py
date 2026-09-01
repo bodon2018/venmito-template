@@ -35,9 +35,14 @@ def section(session: Session, name: str) -> dict[str, Any]:
 
 
 def build_report(session: Session) -> dict[str, Any]:
-    """The whole report, plus plain-language headlines derived from it."""
+    """The whole report, plus plain-language headlines derived from it.
+
+    An empty database is a valid state -- nothing has been uploaded yet -- so
+    it returns a report with `is_empty` set rather than raising.
+    """
     report = {name: build(session) for name, build in SECTIONS.items()}
-    report["headlines"] = _headlines(report)
+    report["is_empty"] = not report["clients"]["summary"].get("clients")
+    report["headlines"] = [] if report["is_empty"] else _headlines(report)
     return report
 
 
@@ -50,7 +55,7 @@ def _headlines(report: dict[str, Any]) -> list[dict[str, str]]:
     lines: list[dict[str, str]] = []
 
     clients = report["clients"]
-    if clients["by_country"]:
+    if clients["by_country"] and clients["summary"].get("median_age") is not None:
         top = clients["by_country"][0]
         lines.append({
             "title": "Client base",
@@ -62,7 +67,7 @@ def _headlines(report: dict[str, Any]) -> list[dict[str, str]]:
 
     promo = report["promotions"]
     by_promo = promo["by_promotion"]
-    if by_promo:
+    if by_promo and promo["overall"].get("response_rate") is not None:
         best, worst = by_promo[0], by_promo[-1]
         lines.append({
             "title": "Promotions",
@@ -100,15 +105,16 @@ def _headlines(report: dict[str, Any]) -> list[dict[str, str]]:
         })
 
     tf = report["transfers"]
-    lines.append({
-        "title": "Transfers",
-        "text": (f"{tf['summary']['clean_transfers']:,} clean transfers moving "
-                 f"${tf['summary']['value_moved']:,.0f}. "
-                 f"{tf['participation']['participants']:,} clients participate "
-                 f"({tf['participation']['participation_rate']:.0%}), and "
-                 f"{tf['cross_sell_audience']['audience_size']:,} of them never buy in a "
-                 f"store -- a cross-sell audience."),
-    })
+    if tf["summary"].get("clean_transfers"):
+        lines.append({
+            "title": "Transfers",
+            "text": (f"{tf['summary']['clean_transfers']:,} clean transfers moving "
+                     f"${tf['summary']['value_moved'] or 0:,.0f}. "
+                     f"{tf['participation']['participants']:,} clients participate "
+                     f"({tf['participation']['participation_rate']:.0%}), and "
+                     f"{tf['cross_sell_audience']['audience_size']:,} of them never buy in a "
+                     f"store -- a cross-sell audience."),
+        })
 
     risk = report["transfer_risk"]
     if risk["flagged"]:

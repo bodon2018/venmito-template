@@ -69,9 +69,9 @@ async function loadAll(view) {
     ]);
     state.report = report; state.loads = loads; state.quarantine = quarantine;
 
-    // No clients means nothing has been ingested yet -- an empty state, not an
-    // error, and not a page of zeroes.
-    if (!report.clients.summary.clients) { state.view = "empty"; render(); return; }
+    // Nothing ingested yet is an empty state, not an error, and not a page
+    // of zeroes. The API says so explicitly.
+    if (report.is_empty) { state.view = "empty"; render(); return; }
     state.view = view; render();
   } catch (err) {
     state.error = err.message; state.view = "error"; render();
@@ -107,7 +107,7 @@ async function submitUpload() {
       view === "pipeline" ? api.quarantine() : Promise.resolve([]),
     ]);
     state.report = report; state.loads = loads; state.quarantine = quarantine;
-    state.view = report.clients.summary.clients ? view : "empty";
+    state.view = report.is_empty ? "empty" : view;
     render(); renderModal();
   } catch (err) {
     state.upload = "idle";

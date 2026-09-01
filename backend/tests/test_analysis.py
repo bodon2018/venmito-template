@@ -30,8 +30,21 @@ def test_every_section_runs(session, name):
 def test_report_has_every_section_plus_headlines(session):
     report = build_report(session)
     assert set(SECTIONS) <= set(report)
-    assert report["headlines"] and all(
-        {"title", "text"} <= set(h) for h in report["headlines"])
+    assert "is_empty" in report
+    # An empty database is a valid state and yields no headlines; with data,
+    # every headline must be a title/text pair.
+    if report["is_empty"]:
+        assert report["headlines"] == []
+    else:
+        assert report["headlines"] and all(
+            {"title", "text"} <= set(h) for h in report["headlines"])
+
+
+def test_empty_database_does_not_raise(session):
+    """The report must survive a database with no rows -- that is what a
+    fresh deployment looks like before the first upload."""
+    report = build_report(session)
+    assert isinstance(report["is_empty"], bool)
 
 
 def test_rates_are_fractions_not_percentages(session):
