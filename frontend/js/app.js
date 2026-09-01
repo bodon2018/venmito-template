@@ -130,6 +130,25 @@ async function submitUpload() {
   }
 }
 
+function refreshFailed(err) {
+  modal.innerHTML = `
+    <div style="position:fixed;inset:0;background:rgba(27,25,23,.34);z-index:60;
+                display:flex;align-items:flex-start;justify-content:center;padding:70px 20px"
+         data-overlay="1">
+      <div style="max-width:520px;background:${C.surface};border-radius:3px;padding:30px 34px"
+           data-panel="1">
+        <h2 style="margin:0 0 10px;font:300 24px ${F.serif}">Uploaded, but the page could not redraw</h2>
+        <pre style="margin:0 0 18px;padding:12px;background:${C.canvas};border-radius:2px;
+                    font:400 11.5px/1.5 ${F.mono};white-space:pre-wrap">${esc(err.message)}</pre>
+        <p style="margin:0 0 18px;font:400 12.5px/1.5 ${F.sans};color:${C.muted}">
+          Your file was written successfully — this is a display problem, not a data one.
+          Reload the page to see the updated figures.</p>
+        <button data-action="reload" style="padding:10px 18px;border:none;border-radius:2px;
+                cursor:pointer;background:${C.ink};color:${C.surface};
+                font:500 12.5px ${F.sans}">Reload</button>
+      </div></div>`;
+}
+
 /* ----------------------------------------------------------- API console */
 async function callEndpoint(method, path) {
   const status = document.getElementById("console-status");
@@ -164,6 +183,7 @@ document.addEventListener("click", (e) => {
     if (a === "close-upload") return closeUpload();
     if (a === "submit-upload") return submitUpload();
     if (a === "retry") return loadAll(state.view === "pipeline" ? "pipeline" : "insights");
+    if (a === "reload") return location.reload();
   }
 
   if (el?.dataset.endpoint) return callEndpoint(el.dataset.method, el.dataset.endpoint);

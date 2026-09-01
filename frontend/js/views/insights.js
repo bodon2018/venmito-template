@@ -39,6 +39,11 @@ const tooLittle = (msg) => `
 
 /* ------------------------------------------------------------- findings */
 function findings(r) {
+  if (!r.headlines.length) {
+    return section("findings", "Findings", "Nothing to report yet", null,
+      tooLittle("Findings are generated from the data in the database. Upload files and "
+                + "they will appear here."));
+  }
   const cards = r.headlines.map((h) => `
     <div style="padding:20px 22px;background:${C.canvas};border-radius:2px">
       <div style="font:500 10px/1 ${F.mono};letter-spacing:.16em;text-transform:uppercase;
@@ -53,6 +58,10 @@ function findings(r) {
 
 /* ------------------------------------------------------------ customers */
 function customers(c) {
+  if (!c.summary.clients || !c.by_city.length) {
+    return section("customers", "Customers", "Who the customer base is", null,
+      tooLittle("No clients have been uploaded yet."));
+  }
   const maxCity = Math.max(...c.by_city.map((x) => x.clients), 0);
   const cities = c.by_city.map((x) =>
     barRow({ label: x.city, value: x.clients, display: num(x.clients),
@@ -99,6 +108,13 @@ function customers(c) {
 
 /* --------------------------------------------------------------- stores */
 function stores(s) {
+  // Null until a transactions file has been ingested. Each section stands on
+  // its own data, because the files arrive one at a time.
+  if (!s.by_item.length || !s.best_seller_by_revenue) {
+    return section("stores", "Stores", "What sells, and where", null,
+      tooLittle("No purchases have been uploaded yet. Upload a transactions file to see "
+                + "best sellers, store performance and the monthly trend."));
+  }
   const maxRev = Math.max(...s.by_item.map((i) => i.revenue), 0);
   const items = s.by_item.map((i) =>
     barRow({ label: i.item, value: i.revenue, display: money(i.revenue),
@@ -166,6 +182,10 @@ function stores(s) {
 
 /* ----------------------------------------------------------- promotions */
 function promotions(p) {
+  if (!p.by_promotion.length) {
+    return section("promotions", "Promotions", "Which offers land", null,
+      tooLittle("No promotions have been uploaded yet."));
+  }
   const maxSent = Math.max(...p.by_promotion.map((x) => x.sent), 0);
   const rows = p.by_promotion.map((x) => {
     const small = x.sent < SMALL_SAMPLE;
@@ -240,6 +260,14 @@ function promotions(p) {
 
 /* ---------------------------------------------------------- who to call */
 function whoToCall(t) {
+  // Needs both promotions and purchases to say anything -- zeroed percentages
+  // would read as a finding rather than as missing data.
+  if (!t.affinity.length) {
+    return section("who-to-call", "Recommended action", "Nothing to recommend yet", null,
+      tooLittle("This needs both promotions and purchases. Upload a promotions file and a "
+                + "transactions file to see which clients turned down an offer for something "
+                + "they already buy."));
+  }
   const bought = t.affinity.find((a) => a.segment === "has bought item") || { sent: 0, response_rate: 0 };
   const not = t.affinity.find((a) => a.segment === "never bought item") || { sent: 0, response_rate: 0 };
   const ratio = not.response_rate ? (bought.response_rate / not.response_rate) : null;
@@ -293,6 +321,10 @@ function whoToCall(t) {
 
 /* ------------------------------------------------------------ transfers */
 function transfers(t, outageMonths) {
+  if (!t.summary.clean_transfers) {
+    return section("transfers", "Transfers", "Money moving between clients", null,
+      tooLittle("No transfers have been uploaded yet."));
+  }
   const s = t.summary;
   const m = t.monthly;
   const bands = m.map((x, i) => (x.null_rows > 0 ? i : -1)).filter((i) => i >= 0);
@@ -345,6 +377,10 @@ function transfers(t, outageMonths) {
 
 /* ------------------------------------------------------------- coverage */
 function coverage(cv) {
+  if (!cv.by_channel_count.length) {
+    return section("coverage", "Coverage", "How much we know about each client", null,
+      tooLittle("No clients have been uploaded yet."));
+  }
   const total = cv.by_channel_count.reduce((s, x) => s + x.clients, 0);
   const colours = [C.faint2, C.business, C.warn, C.ok];
   return section("coverage", "Coverage", "How much we know about each client",
@@ -379,7 +415,8 @@ export function renderInsights(r) {
         </div>
         <div style="display:flex;align-items:center;gap:20px">
           <span style="font:400 11.5px/1 ${F.mono};color:${C.faint}">
-            ${num(r.clients.summary.clients)} clients · ${num(r.stores.monthly.length)} months</span>
+            ${num(r.clients.summary.clients || 0)} clients${
+              r.stores.monthly.length ? ` · ${num(r.stores.monthly.length)} months` : ""}</span>
           <button data-action="open-upload"
             style="padding:9px 15px;border:1px solid ${C.hairHard};border-radius:2px;
                    background:none;font:500 12px ${F.sans};cursor:pointer">Upload data</button>
