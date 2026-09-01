@@ -10,7 +10,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from .api.routes import analysis, auth, health, loads, uploads
+from .api.routes import analysis, auth, export, health, loads, uploads
 from .config import settings
 from .security import HEADER, token_is_valid
 
@@ -72,3 +72,4 @@ app.include_router(health.router)
 app.include_router(uploads.router)
 app.include_router(loads.router)
 app.include_router(analysis.router)
+app.include_router(export.router)

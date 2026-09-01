@@ -151,6 +151,31 @@ function loadHistory(loads, quarantine) {
       Nothing retries automatically. Re-upload a corrected file to resolve these rows.</p>`);
 }
 
+/* ----------------------------------------------------------------- export */
+function exportPanel(exports) {
+  const rows = exports.map((e) => `
+    <div style="display:flex;align-items:center;gap:16px;padding:12px 0;
+                border-top:1px solid ${C.hairSoft}">
+      <div style="flex:1;min-width:0">
+        <div style="font:500 12.5px ${F.sans}">${esc(e.label)}</div>
+        <div style="margin-top:3px;font:400 11.5px/1.45 ${F.sans};color:${C.faint}">
+          ${esc(e.note)}</div>
+      </div>
+      <span data-export-status="${esc(e.name)}"
+            style="font:400 11px ${F.mono};color:${C.faint};min-width:74px;text-align:right"></span>
+      <button data-export="${esc(e.name)}"
+        style="flex:none;padding:8px 14px;border:1px solid ${C.hairHard};border-radius:2px;
+               background:none;cursor:pointer;font:500 11.5px ${F.sans}">CSV</button>
+    </div>`).join("");
+
+  return panel("export", "Export", "Take the data out",
+    `Downloads the conformed tables as CSV — the same rows the analysis reads, flags
+     included, so a filtered subset can be reproduced downstream. Files stream from the
+     database rather than being assembled in memory.`,
+    rows || `<p style="margin:0;font:400 12.5px ${F.sans};color:${C.muted}">
+      No exports available.</p>`);
+}
+
 /* ------------------------------------------------------------- API console */
 const ENDPOINTS = [
   ["GET", "/health", "Liveness and database connectivity"],
@@ -168,6 +193,7 @@ const ENDPOINTS = [
   ["GET", "/loads", "Upload history"],
   ["GET", "/loads/quarantine", "Rejected rows with reasons"],
   ["GET", "/loads/notes", "Data-quality notes"],
+  ["GET", "/export", "Datasets available for export"],
 ];
 
 function console_() {
@@ -198,7 +224,7 @@ function console_() {
 }
 
 /* ------------------------------------------------------------------ shell */
-export function renderPipeline({ report, loads, quarantine }) {
+export function renderPipeline({ report, loads, quarantine, exports = [] }) {
   return `
     <div class="vm-page" style="background:${C.surface};min-height:100vh">
       <div class="vm-pad" style="position:sticky;top:0;z-index:20;background:${C.surface};
@@ -224,10 +250,12 @@ export function renderPipeline({ report, loads, quarantine }) {
                   align-items:center;font:400 12px ${F.sans};color:${C.faint}">
         <a href="#flagged" style="color:inherit;text-decoration:none">Flagged records</a>
         <a href="#loads" style="color:inherit;text-decoration:none">Load history</a>
+        <a href="#export" style="color:inherit;text-decoration:none">Export</a>
         <a href="#console" style="color:inherit;text-decoration:none">API console</a>
       </nav>
       ${flagged(report.data_quality, report.transfer_risk)}
       ${loadHistory(loads, quarantine)}
+      ${exportPanel(exports)}
       ${console_()}
     </div>`;
 }

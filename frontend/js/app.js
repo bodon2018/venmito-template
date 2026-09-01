@@ -20,6 +20,7 @@ const state = {
   report: null,
   loads: [],
   quarantine: [],
+  exports: [],
   staged: [],
   mode: "append",
   upload: "idle",           // idle | busy | done
@@ -40,7 +41,8 @@ function render() {
   if (state.view === "insights") root.innerHTML = renderInsights(state.report);
   if (state.view === "pipeline") {
     root.innerHTML = renderPipeline({
-      report: state.report, loads: state.loads, quarantine: state.quarantine });
+      report: state.report, loads: state.loads, quarantine: state.quarantine,
+      exports: state.exports });
     refreshHealthPill();
   }
 }
@@ -71,12 +73,14 @@ async function loadAll(view) {
   state.view = "loading"; render();
   try {
     // The pipeline view needs load history too; fetch in parallel.
-    const [report, loads, quarantine] = await Promise.all([
+    const [report, loads, quarantine, exports] = await Promise.all([
       api.report(),
       view === "pipeline" ? api.loads() : Promise.resolve([]),
       view === "pipeline" ? api.quarantine() : Promise.resolve([]),
+      view === "pipeline" ? api.exports() : Promise.resolve({ exports: [] }),
     ]);
     state.report = report; state.loads = loads; state.quarantine = quarantine;
+    state.exports = exports.exports || [];
 
     // Nothing ingested yet is an empty state, not an error, and not a page
     // of zeroes. The API says so explicitly.
@@ -208,9 +212,30 @@ async function callEndpoint(method, path) {
   }
 }
 
+/* ------------------------------------------------------------------ export */
+async function downloadExport(name, button) {
+  const status = document.querySelector(`[data-export-status="${name}"]`);
+  const label = button.textContent;
+  button.disabled = true;
+  button.textContent = "…";
+  if (status) { status.textContent = "preparing"; status.style.color = C.faint; }
+  try {
+    const filename = await api.downloadCsv(name);
+    if (status) { status.textContent = "downloaded"; status.style.color = C.ok; }
+    console.info("exported", filename);
+  } catch (err) {
+    if (err instanceof NeedsCodeError) return requireCode("pipeline");
+    if (status) { status.textContent = "failed"; status.style.color = C.error; }
+  } finally {
+    button.disabled = false;
+    button.textContent = label;
+  }
+}
+
 /* ------------------------------------------------------------------ events */
 document.addEventListener("click", (e) => {
-  const el = e.target.closest("[data-action],[data-endpoint],[data-remove],[data-quarantine]");
+  const el = e.target.closest(
+    "[data-action],[data-endpoint],[data-remove],[data-quarantine],[data-export]");
 
   if (el?.dataset.action) {
     const a = el.dataset.action;
@@ -224,6 +249,8 @@ document.addEventListener("click", (e) => {
   }
 
   if (el?.dataset.endpoint) return callEndpoint(el.dataset.method, el.dataset.endpoint);
+
+  if (el?.dataset.export) return downloadExport(el.dataset.export, el);
 
   if (el?.dataset.remove !== undefined) {
     state.staged.splice(Number(el.dataset.remove), 1);

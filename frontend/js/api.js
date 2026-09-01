@@ -55,6 +55,30 @@ export const api = {
   loads:      (limit = 50) => request(`/loads?limit=${limit}`),
   quarantine: (limit = 200) => request(`/loads/quarantine?limit=${limit}`),
   notes:      () => request("/loads/notes"),
+  exports:    () => request("/export"),
+
+  /** Fetch with the token, then hand the browser a file. A plain <a href>
+   *  cannot carry the access-code header, so the download goes through fetch
+   *  and an object URL. */
+  async downloadCsv(name) {
+    const t = token.get();
+    const res = await fetch(`${BASE}/export/${encodeURIComponent(name)}.csv`,
+                            { headers: t ? { [HEADER]: t } : {} });
+    if (res.status === 401) { token.clear(); throw new NeedsCodeError("An access code is required."); }
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = (res.headers.get("content-disposition") || "")
+      .match(/filename="?([^"]+)"?/)?.[1] || `venmito_${name}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    return a.download;
+  },
 
   /** files: FileList or array. mode: "append" | "replace". */
   upload(files, mode = "append") {
