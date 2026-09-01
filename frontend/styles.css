@@ -24,3 +24,72 @@ a{color:oklch(0.52 0.12 45);text-decoration:none}
 a:hover{color:oklch(0.44 0.13 45)}
 @keyframes shimmer{0%{background-position:-600px 0}100%{background-position:600px 0}}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* ---------------------------------------------------------------- layout
+   The views are otherwise styled inline. These few classes exist because
+   media queries cannot override inline styles, so every property that has
+   to change with width lives here instead.
+
+   Target range is laptops: roughly 1024px to 1920px. Below 1024 the tables
+   scroll horizontally rather than reflowing -- this is a desktop tool. */
+
+.vm-page{max-width:1680px;margin:0 auto}
+.vm-pad{padding-left:64px;padding-right:64px}
+.vm-section{padding:52px 64px 44px}
+.vm-section-tight{padding:44px 64px 40px}
+
+/* Two equal columns of bar lists, side by side until there is no room. */
+.vm-two{display:grid;grid-template-columns:1fr 1fr;gap:52px}
+/* Headline cards. */
+.vm-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+/* Flagged-record counters. */
+.vm-quad{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+/* Endpoint list beside the response pane; quarantine list beside its detail. */
+.vm-split{display:grid;grid-template-columns:390px 1fr;gap:24px}
+.vm-split-narrow{display:grid;grid-template-columns:340px 1fr;gap:24px}
+/* A rule of big figures. Wraps rather than crushing the numbers. */
+.vm-stats{display:flex;flex-wrap:wrap;gap:44px;row-gap:24px}
+.vm-stats>*{min-width:130px}
+/* Wide tables and the heat grid scroll inside themselves. */
+.vm-scroll{overflow-x:auto}
+.vm-scroll>table{min-width:640px}
+
+/* A bar row: label, track, value, note. Only the track flexes. */
+.vm-bar{display:flex;align-items:center;gap:14px;padding:7px 0}
+.vm-bar-label{flex:0 0 auto;width:132px}
+.vm-bar-label-wide{width:150px}
+.vm-bar-track{flex:1 1 auto;min-width:60px}
+.vm-bar-value{flex:0 0 auto;width:96px;text-align:right}
+.vm-bar-note{flex:0 0 auto;width:92px}
+
+@media (max-width:1440px){
+  .vm-two{gap:40px}
+  .vm-stats{gap:34px}
+}
+
+@media (max-width:1280px){
+  .vm-pad,.vm-section,.vm-section-tight{padding-left:44px;padding-right:44px}
+  .vm-two{gap:32px}
+  .vm-quad{grid-template-columns:repeat(3,1fr)}
+  .vm-split{grid-template-columns:320px 1fr}
+  .vm-bar-label{width:112px}
+  .vm-bar-label-wide{width:128px}
+  .vm-bar-note{width:78px}
+}
+
+@media (max-width:1150px){
+  .vm-quad{grid-template-columns:repeat(2,1fr)}
+  .vm-stats{gap:26px}
+}
+
+/* Below this the two-column bar sections stop being readable side by side. */
+@media (max-width:1040px){
+  .vm-pad,.vm-section,.vm-section-tight{padding-left:32px;padding-right:32px}
+  .vm-two{grid-template-columns:1fr;gap:34px}
+  .vm-cards{grid-template-columns:1fr}
+  .vm-split,.vm-split-narrow{grid-template-columns:1fr}
+  .vm-bar-label{width:120px}
+}
+
+/* Entry cards sit side by side; they stack only on a genuinely narrow window. */
+@media (max-width:900px){ .vm-entry{flex-direction:column} }

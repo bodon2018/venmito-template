@@ -9,7 +9,7 @@ import { api } from "../api.js";
 const A = C.technical;
 
 const panel = (id, eyebrow, title, sub, body) => `
-  <section id="${id}" style="padding:44px 64px 40px;border-bottom:1px solid ${C.hair}">
+  <section id="${id}" class="vm-section-tight" style="border-bottom:1px solid ${C.hair}">
     <div style="margin-bottom:22px">
       <div style="font:500 10px/1 ${F.mono};letter-spacing:.2em;text-transform:uppercase;
                   color:${A}">${esc(eyebrow)}</div>
@@ -59,7 +59,7 @@ function flagged(dq, risk) {
   const maxTag = Math.max(...risk.tags.map((t) => t.transfers), 0);
   const bars = risk.tags.map((t) => barRow({
     label: t.tag.replace(/_/g, " "), value: t.transfers, display: num(t.transfers),
-    max: maxTag, colour: FLAG_HUES[t.tag] ?? A, labelWidth: 150,
+    max: maxTag, colour: FLAG_HUES[t.tag] ?? A, wide: true,
   })).join("");
 
   const rows = risk.flagged.map((r) => `
@@ -77,8 +77,7 @@ function flagged(dq, risk) {
      business figures by query, not by removal — the transfer patterns in particular are
      kept because they are a fraud signal. One transfer can carry several tags, so the
      bars below sum to more than ${num(dq.counts.behavioural_flagged)}.`, `
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:32px">
-      ${cards}</div>
+    <div class="vm-quad" style="margin-bottom:32px">${cards}</div>
     <h3 style="margin:0 0 10px;font:500 12px/1 ${F.mono};letter-spacing:.1em;
                text-transform:uppercase;color:${C.muted2}">Transfer risk tags</h3>
     ${bars}
@@ -86,12 +85,12 @@ function flagged(dq, risk) {
                text-transform:uppercase;color:${C.muted2}">Flagged transfers</h3>
     <p style="margin:0 0 10px;font:400 11.5px ${F.sans};color:${C.faint}">
       Showing ${risk.flagged.length} rows, largest amount first.</p>
-    <table style="width:100%;border-collapse:collapse">
+    <div class="vm-scroll"><table style="width:100%;border-collapse:collapse">
       <tr>${["Key","Sender","Recipient","Amount","Date","Tags"].map((h, i) =>
         `<th style="text-align:${i === 3 ? "right" : "left"};padding:0 12px 8px ${i === 0 ? "0" : ""};
           font:500 10.5px ${F.mono};letter-spacing:.1em;text-transform:uppercase;
           color:${C.faint};font-weight:500">${h}</th>`).join("")}</tr>
-      ${rows}</table>
+      ${rows}</table></div>
     ${dq.outages.length ? `
       <h3 style="margin:30px 0 8px;font:500 12px/1 ${F.mono};letter-spacing:.1em;
                  text-transform:uppercase;color:${C.muted2}">Ingestion notes</h3>
@@ -132,16 +131,15 @@ function loadHistory(loads, quarantine) {
 
   return panel("loads", "Load history", "Every upload, and what it rejected",
     "Superseded loads keep their audit row and raw records; they are excluded from current counts, not erased.", `
-    <table style="width:100%;border-collapse:collapse;margin-bottom:34px">
+    <div class="vm-scroll" style="margin-bottom:34px"><table style="width:100%;border-collapse:collapse">
       <tr>${["File","Format","Entity","Status","Loaded","Quarantined","Started"].map((h, i) =>
         `<th style="text-align:${i === 4 || i === 5 ? "right" : "left"};
           padding:0 12px 8px ${i === 0 ? "0" : ""};font:500 10.5px ${F.mono};letter-spacing:.1em;
           text-transform:uppercase;color:${C.faint};font-weight:500">${h}</th>`).join("")}</tr>
-      ${rows}</table>
+      ${rows}</table></div>
     <h3 style="margin:0 0 10px;font:500 12px/1 ${F.mono};letter-spacing:.1em;
                text-transform:uppercase;color:${C.muted2}">Quarantine — ${quarantine.length} rows</h3>
-    <div style="display:grid;grid-template-columns:340px 1fr;gap:24px;border:1px solid ${C.hair};
-                border-radius:2px;overflow:hidden">
+    <div class="vm-split-narrow" style="border:1px solid ${C.hair};border-radius:2px;overflow:hidden">
       <div style="max-height:330px;overflow:auto;border-right:1px solid ${C.hair}">
         ${qRows || `<p style="padding:16px;margin:0;font:400 12.5px ${F.sans};color:${C.muted}">
           Nothing quarantined.</p>`}</div>
@@ -176,7 +174,7 @@ function console_() {
   return panel("console", "API console", "Work against the server directly",
     `Requests go to <code style="font:500 12px ${F.mono}">${esc(api.base)}</code>.
      Uploads are not listed here — use the upload panel, which posts multipart form data.`, `
-    <div style="display:grid;grid-template-columns:390px 1fr;gap:24px">
+    <div class="vm-split">
       <div style="border:1px solid ${C.hair};border-radius:2px;max-height:430px;overflow:auto">
         ${ENDPOINTS.map(([m, p, d]) => `
           <button data-endpoint="${esc(p)}" data-method="${m}"
@@ -202,9 +200,9 @@ function console_() {
 /* ------------------------------------------------------------------ shell */
 export function renderPipeline({ report, loads, quarantine }) {
   return `
-    <div style="background:${C.surface};min-height:100vh">
-      <div style="position:sticky;top:0;z-index:20;background:${C.surface};
-                  border-bottom:1px solid ${C.hair};padding:0 64px;display:flex;
+    <div class="vm-page" style="background:${C.surface};min-height:100vh">
+      <div class="vm-pad" style="position:sticky;top:0;z-index:20;background:${C.surface};
+                  border-bottom:1px solid ${C.hair};display:flex;
                   align-items:center;justify-content:space-between;height:64px">
         <div style="display:flex;align-items:baseline;gap:26px">
           <span style="font:500 12px/1 ${F.mono};letter-spacing:.18em;text-transform:uppercase">Venmito</span>
@@ -221,8 +219,8 @@ export function renderPipeline({ report, loads, quarantine }) {
             ← Switch to insights view</button>
         </div>
       </div>
-      <nav style="position:sticky;top:64px;z-index:19;border-bottom:1px solid ${C.hair};
-                  background:${C.surface};padding:0 64px;display:flex;gap:26px;height:44px;
+      <nav class="vm-pad" style="position:sticky;top:64px;z-index:19;border-bottom:1px solid ${C.hair};
+                  background:${C.surface};display:flex;gap:26px;height:44px;
                   align-items:center;font:400 12px ${F.sans};color:${C.faint}">
         <a href="#flagged" style="color:inherit;text-decoration:none">Flagged records</a>
         <a href="#loads" style="color:inherit;text-decoration:none">Load history</a>

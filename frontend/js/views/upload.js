@@ -121,7 +121,7 @@ export function uploadResult(results) {
         <button data-action="close-upload" style="border:none;background:none;cursor:pointer;
                 font:400 18px ${F.mono};color:${C.faint}">×</button>
       </div>
-      <div style="display:flex;gap:20px;align-items:flex-start;padding:0 0 20px;
+      <div class="vm-stats" style="gap:20px;align-items:flex-start;padding:0 0 20px;
                   border-bottom:1px solid ${C.hair}">
         ${stat("Rows loaded", num(loaded))}
         ${stat("Could not match to a client", num(unmatched),
@@ -140,12 +140,12 @@ export function uploadResult(results) {
           ${skipped.length} file${skipped.length === 1 ? " was" : "s were"} identical to data
           already stored, so nothing was changed for
           ${skipped.map((s) => esc(s.filename)).join(", ")}.</p>` : ""}
-      <table style="width:100%;border-collapse:collapse;margin-top:22px">
+      <div class="vm-scroll" style="margin-top:22px"><table style="width:100%;border-collapse:collapse">
         <tr>${["File","Type","Mode","Read","Loaded","Unmatched"].map((h, i) =>
           `<th style="text-align:${i > 2 ? "right" : "left"};padding:0 12px 8px ${i === 0 ? "0" : ""};
             font:500 10.5px ${F.mono};letter-spacing:.1em;text-transform:uppercase;
             color:${C.faint};font-weight:500">${h}</th>`).join("")}</tr>
-        ${rows}</table>
+        ${rows}</table></div>
       ${warnings.length ? `
         <div style="margin-top:22px">
           <h3 style="margin:0 0 8px;font:500 11px ${F.mono};letter-spacing:.1em;

@@ -26,7 +26,7 @@ export function entryScreen() {
           Which view do you need?</h1>
         <p style="margin:0 0 34px;font:400 14px/1.6 ${F.sans};color:${C.muted};max-width:60ch">
           Both views read the same numbers. You can switch at any time.</p>
-        <div style="display:flex;gap:18px">
+        <div class="vm-entry" style="display:flex;gap:18px">
           ${card("go-insights", C.business, "Non-technical", "Insights",
             "What the data says about clients, stores, campaigns and transfers — in plain language.",
             ["Findings rewritten after every upload",
@@ -48,7 +48,7 @@ export function loadingScreen(accent = C.business) {
   const bar = (w, h = 13, mt = 10) => `<div style="${shimmer};width:${w};height:${h}px;margin-top:${mt}px"></div>`;
   return `
     <div style="background:${C.surface};min-height:100vh">
-      <div style="border-bottom:1px solid ${C.hair};padding:0 64px;display:flex;
+      <div class="vm-pad" style="border-bottom:1px solid ${C.hair};display:flex;
                   align-items:center;justify-content:space-between;height:64px">
         <span style="font:500 12px/1 ${F.mono};letter-spacing:.18em;text-transform:uppercase">Venmito</span>
         <span style="display:flex;align-items:center;gap:10px;font:400 11.5px ${F.mono};color:${C.faint}">
@@ -56,15 +56,15 @@ export function loadingScreen(accent = C.business) {
                        border-radius:50%;animation:spin .8s linear infinite"></span>
           loading ~29 KB</span>
       </div>
-      <div style="padding:52px 64px">
+      <div class="vm-section">
         <div style="${shimmer};width:420px;height:34px"></div>
-        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:28px">
+        <div class="vm-cards" style="margin-top:28px">
           ${Array.from({ length: 4 }, () => `
             <div style="padding:20px 22px;background:${C.canvas};border-radius:2px">
               ${bar("120px", 10, 0)}${bar("100%")}${bar("80%")}
             </div>`).join("")}
         </div>
-        <div style="display:flex;gap:44px;margin-top:40px;padding:22px 0;
+        <div class="vm-stats" style="margin-top:40px;padding:22px 0;
                     border-top:1px solid ${C.hairHard};border-bottom:1px solid ${C.hair}">
           ${Array.from({ length: 4 }, () => `<div style="flex:1">
             ${bar("70px", 9, 0)}<div style="${shimmer};width:110px;height:28px;margin-top:12px"></div>

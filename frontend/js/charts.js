@@ -56,18 +56,21 @@ export function columnChart(values, { height = 90, colour = C.business, gap = 2 
 
 /** A labelled horizontal bar row. `muted` dims rows built on a small sample. */
 export function barRow({ label, value, display, max, colour = C.business,
-                         note = "", muted = false, labelWidth = 132 }) {
+                         note = "", muted = false, wide = false }) {
   const w = max ? Math.max((value / max) * 100, 0.6) : 0;
-  return `<div style="display:flex;align-items:center;gap:14px;padding:7px 0">
-    <span style="width:${labelWidth}px;flex:none;font:400 12.5px/1.3 ${F.sans};
-                 color:${muted ? C.faint : C.ink}">${esc(label)}</span>
-    <span style="flex:1;height:9px;background:${C.hairSoft};border-radius:1px;overflow:hidden">
+  // Widths come from CSS so they can shrink with the viewport; only the
+  // track flexes, so labels and figures stay aligned across rows.
+  return `<div class="vm-bar">
+    <span class="vm-bar-label${wide ? " vm-bar-label-wide" : ""}"
+          style="font:400 12.5px/1.3 ${F.sans};color:${muted ? C.faint : C.ink}">${esc(label)}</span>
+    <span class="vm-bar-track" style="height:9px;background:${C.hairSoft};
+                 border-radius:1px;overflow:hidden">
       <span style="display:block;height:100%;width:${w.toFixed(1)}%;
                    background:${colour};opacity:${muted ? 0.3 : 1}"></span>
     </span>
-    <span style="width:96px;flex:none;text-align:right;font:500 12px/1 ${F.mono};
+    <span class="vm-bar-value" style="font:500 12px/1 ${F.mono};
                  color:${muted ? C.faint : C.ink}">${esc(display)}</span>
-    <span style="width:92px;flex:none;font:400 11px/1 ${F.mono};color:${C.faint}">${note}</span>
+    <span class="vm-bar-note" style="font:400 11px/1 ${F.mono};color:${C.faint}">${note}</span>
   </div>`;
 }
 
@@ -92,7 +95,9 @@ export function heatGrid({ rows, cols, valueAt, format }) {
           >${v ? esc(format(v)) : ""}</span></td>`;
       }).join("")}
     </tr>`).join("");
-  return `<table style="width:100%;border-collapse:collapse">${head}${body}</table>`;
+  // Scrolls inside itself rather than forcing the page wide.
+  return `<div class="vm-scroll"><table style="width:100%;border-collapse:collapse">
+    ${head}${body}</table></div>`;
 }
 
 /** Proportional rail, used for channel coverage. */

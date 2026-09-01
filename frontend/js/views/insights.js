@@ -9,7 +9,7 @@ const NAV = ["Findings", "Customers", "Stores", "Promotions",
              "Who to call", "Transfers", "Coverage"];
 
 const section = (id, eyebrow, title, sub, body) => `
-  <section id="${id}" style="padding:52px 64px 44px;border-bottom:1px solid ${C.hair}">
+  <section id="${id}" class="vm-section" style="border-bottom:1px solid ${C.hair}">
     <div style="margin-bottom:26px">
       <div style="font:500 10px/1 ${F.mono};letter-spacing:.2em;text-transform:uppercase;
                   color:${C.business}">${esc(eyebrow)}</div>
@@ -30,7 +30,7 @@ const stat = (label, value, note = "") => `
   </div>`;
 
 const statRule = (cells) => `
-  <div style="display:flex;gap:44px;padding:22px 0;border-top:1px solid ${C.hairHard};
+  <div class="vm-stats" style="padding:22px 0;border-top:1px solid ${C.hairHard};
               border-bottom:1px solid ${C.hair};margin-bottom:30px">${cells.join("")}</div>`;
 
 const tooLittle = (msg) => `
@@ -48,7 +48,7 @@ function findings(r) {
   return section("findings", "Findings",
     `${r.headlines.length} things the data says right now`,
     "Rewritten after every upload — these sentences are generated from the current numbers, not written by hand.",
-    `<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px">${cards}</div>`);
+    `<div class="vm-cards">${cards}</div>`);
 }
 
 /* ------------------------------------------------------------ customers */
@@ -59,10 +59,10 @@ function customers(c) {
              max: maxCity, note: x.country })).join("");
   const countries = c.by_country.map((x) =>
     barRow({ label: x.country, value: x.clients, display: num(x.clients),
-             max: c.by_country[0].clients, note: pct(x.pct / 100, 0), labelWidth: 118 })).join("");
+             max: c.by_country[0].clients, note: pct(x.pct / 100, 0) })).join("");
   const devices = c.devices.map((x) =>
     barRow({ label: x.device, value: x.clients, display: num(x.clients),
-             max: c.devices[0].clients, note: pct(x.pct / 100, 0), labelWidth: 118 })).join("");
+             max: c.devices[0].clients, note: pct(x.pct / 100, 0) })).join("");
 
   const hist = c.age_histogram;
   return section("customers", "Customers", "Who the customer base is", null, `
@@ -71,7 +71,7 @@ function customers(c) {
       stat("Countries", num(c.summary.countries)),
       stat("Median age", num(c.summary.median_age, 0)),
     ])}
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:52px">
+    <div class="vm-two">
       <div>
         <h3 style="margin:0 0 10px;font:500 12px/1 ${F.mono};letter-spacing:.1em;
                    text-transform:uppercase;color:${C.muted2}">Clients by country</h3>
@@ -135,7 +135,7 @@ function stores(s) {
       The two best sellers are different items — ${esc(s.best_seller_by_revenue.item)} leads on
       revenue, ${esc(s.best_seller_by_units.item)} on units. Which one is “best” depends on the
       measure, so both are shown.</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:52px">
+    <div class="vm-two">
       <div><h3 style="margin:0 0 10px;font:500 12px/1 ${F.mono};letter-spacing:.1em;
                       text-transform:uppercase;color:${C.muted2}">Items by revenue</h3>${items}</div>
       <div><h3 style="margin:0 0 10px;font:500 12px/1 ${F.mono};letter-spacing:.1em;
@@ -178,7 +178,7 @@ function promotions(p) {
 
   const channels = p.by_channel.map((x) =>
     barRow({ label: x.channel, value: x.response_rate, display: pct(x.response_rate),
-             max: 1, note: `n = ${x.sent}`, labelWidth: 118 })).join("");
+             max: 1, note: `n = ${x.sent}` })).join("");
 
   const byMonth = MONTHS.map((_, i) =>
     p.by_month.find((m) => m.month === i + 1) || { sent: 0, response_rate: 0 });
@@ -223,7 +223,7 @@ function promotions(p) {
                text-transform:uppercase;color:${C.muted2}">Clients and their offers</h3>
     <p style="margin:0 0 10px;font:400 11.5px/1.4 ${F.sans};color:${C.faint}">
       Showing ${Math.min(12, p.client_roster.length)} of ${p.client_roster.length}.</p>
-    <table style="width:100%;border-collapse:collapse">
+    <div class="vm-scroll"><table style="width:100%;border-collapse:collapse">
       <tr><th style="text-align:left;padding:0 12px 8px 0;font:500 10.5px ${F.mono};
                      letter-spacing:.1em;text-transform:uppercase;color:${C.faint};font-weight:500">Client</th>
           <th style="text-align:left;padding:0 12px 8px;font:500 10.5px ${F.mono};
@@ -235,7 +235,7 @@ function promotions(p) {
           <th style="text-align:left;padding:0 0 8px;font:500 10.5px ${F.mono};
                      letter-spacing:.1em;text-transform:uppercase;color:${C.faint};font-weight:500">Campaigns</th></tr>
       ${roster}
-    </table>`);
+    </table></div>`);
 }
 
 /* ---------------------------------------------------------- who to call */
@@ -258,7 +258,7 @@ function whoToCall(t) {
   return section("who-to-call", "Recommended action",
     n ? `${n} people worth calling back` : "Nobody to call back right now",
     null, `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:52px;margin-bottom:28px">
+    <div class="vm-two" style="margin-bottom:28px">
       <div>
         <p style="margin:0 0 16px;font:400 13.5px/1.6 ${F.sans};max-width:56ch">
           These clients turned down an offer for something they already buy. The product is
@@ -280,12 +280,12 @@ function whoToCall(t) {
           not a campaign.</p>
       </div>
     </div>
-    ${n ? `<table style="width:100%;border-collapse:collapse">
+    ${n ? `<div class="vm-scroll"><table style="width:100%;border-collapse:collapse">
       <tr>${["Client","Country","Declined offer","Spend on item","Offer date","Reached"]
         .map((h, i) => `<th style="text-align:${i === 3 ? "right" : "left"};
           padding:0 12px 8px ${i === 0 ? "0" : ""};font:500 10.5px ${F.mono};letter-spacing:.1em;
           text-transform:uppercase;color:${C.faint};font-weight:500">${h}</th>`).join("")}</tr>
-      ${rows}</table>
+      ${rows}</table></div>
       <p style="margin:12px 0 0;font:400 11.5px/1.4 ${F.sans};color:${C.faint}">
         All ${n} shown — this is the whole list, not a page of it.</p>`
       : tooLittle("No client has yet declined an offer for an item they already buy.")}`);
@@ -302,7 +302,7 @@ function transfers(t, outageMonths) {
     value: Math.abs(r.net_flow),
     display: money(r.net_flow, 2),
     max: Math.max(...rows.map((x) => Math.abs(x.net_flow)), 0),
-    colour, note: `${r.degree} transfers`, labelWidth: 148,
+    colour, note: `${r.degree} transfers`, wide: true,
   })).join("");
 
   return section("transfers", "Transfers", "Money moving between clients", null, `
@@ -322,7 +322,7 @@ function transfers(t, outageMonths) {
         Clients who send or receive money but have never bought anything in a store. They are
         active and reachable, and none of the store campaigns have touched them.</p>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:52px">
+    <div class="vm-two">
       <div><h3 style="margin:0 0 10px;font:500 12px/1 ${F.mono};letter-spacing:.1em;
                       text-transform:uppercase;color:${C.muted2}">Net receivers</h3>
         ${flow(t.top_net_receivers, C.ok)}</div>
@@ -369,9 +369,9 @@ function coverage(cv) {
 export function renderInsights(r) {
   const outageMonths = r.data_quality.outages.length;
   return `
-    <div style="background:${C.surface};min-height:100vh">
-      <div style="position:sticky;top:0;z-index:20;background:${C.surface};
-                  border-bottom:1px solid ${C.hair};padding:0 64px;display:flex;
+    <div class="vm-page" style="background:${C.surface};min-height:100vh">
+      <div class="vm-pad" style="position:sticky;top:0;z-index:20;background:${C.surface};
+                  border-bottom:1px solid ${C.hair};display:flex;
                   align-items:center;justify-content:space-between;height:64px">
         <div style="display:flex;align-items:baseline;gap:26px">
           <span style="font:500 12px/1 ${F.mono};letter-spacing:.18em;text-transform:uppercase">Venmito</span>
@@ -389,8 +389,8 @@ export function renderInsights(r) {
             Switch to pipeline view →</button>
         </div>
       </div>
-      <nav style="position:sticky;top:64px;z-index:19;border-bottom:1px solid ${C.hair};
-                  background:${C.surface};padding:0 64px;display:flex;gap:26px;height:44px;
+      <nav class="vm-pad" style="position:sticky;top:64px;z-index:19;border-bottom:1px solid ${C.hair};
+                  background:${C.surface};display:flex;gap:26px;height:44px;
                   align-items:center;font:400 12px ${F.sans};color:${C.faint}">
         ${NAV.map((n, i) => `<a href="#${["findings","customers","stores","promotions",
           "who-to-call","transfers","coverage"][i]}"
@@ -404,7 +404,8 @@ export function renderInsights(r) {
       ${whoToCall(r.turn_no_into_yes)}
       ${transfers(r.transfers, outageMonths)}
       ${coverage(r.channel_coverage)}
-      <footer style="padding:30px 64px 60px;font:400 11.5px/1.6 ${F.sans};color:${C.faint}">
+      <footer class="vm-pad" style="padding-top:30px;padding-bottom:60px;
+              font:400 11.5px/1.6 ${F.sans};color:${C.faint}">
         Every figure on this page is computed from the data currently in the database.
         A section with too little data says so rather than drawing an empty chart.
       </footer>

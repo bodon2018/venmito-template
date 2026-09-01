@@ -43,6 +43,25 @@ marks, so `charts.js` computes SVG polyline coordinates and percentage widths
 directly. Adding a library would introduce a dependency and its own opinions
 about axes and colour.
 
+## Responsive behaviour
+
+Built for laptops, roughly **1024px to 1920px**. Not designed for tablet or phone.
+
+| Width | What changes |
+|---|---|
+| above 1680 | Content caps at 1680px and centres, so bars and text lines stay readable |
+| 1440 and below | Column gaps tighten |
+| 1280 and below | Side padding 64 → 44px; flagged counters go 4 → 3 across |
+| 1150 and below | Flagged counters go 3 → 2 across |
+| 1040 and below | Side padding → 32px; two-column sections stack; API console and quarantine panels stack |
+
+Media queries live in `styles.css`. Everything else is styled inline, so any
+property that has to change with width was moved out of the markup into one of
+the `.vm-*` classes — a media query cannot override an inline style.
+
+Wide tables and the item-by-store grid scroll inside themselves (`.vm-scroll`)
+rather than forcing the page horizontally wide.
+
 ## Behaviour worth knowing
 
 - **Small samples are marked, not hidden.** Campaigns under 20 offers render
