@@ -1,1 +1,5 @@
 .DS_Store
+.env
+backend/.env
+supabase_key.txt
+data_clean/

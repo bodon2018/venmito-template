@@ -18,7 +18,9 @@ We have five data files available:
 
 These files contain information about our customers, transactions, transfers, or promotions.
 
-Your task is to develop a solution that reads, unifies, and structures our data into a consumable format. Additionally, we would like you to analyze this data and provide clear, actionable insights based solely on your findings. These insights should help us better understand our customers, improve our processes, and make informed, data-driven decisions going forward.
+Your task is to develop a solution that reads, unifies, and structures our data into a consumable format. 
+Additionally, we would like you to analyze this data and provide clear, actionable insights based solely on your findings. 
+These insights should help us better understand our customers, improve our processes, and make informed, data-driven decisions going forward.
 
 ## Requirements
 
