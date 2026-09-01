@@ -32,6 +32,21 @@ class Settings(BaseSettings):
 
     max_upload_bytes: int = 32 * 1024 * 1024
 
+    # Shared access codes, comma-separated. Anyone with one can use the app.
+    # Empty means the gate is open -- convenient for local work, and the app
+    # warns at startup so it cannot be left that way by accident.
+    access_codes_raw: str = ""
+    # Optional signing secret; derived from the codes when unset.
+    secret_key: str = ""
+
+    @property
+    def access_codes(self) -> tuple[str, ...]:
+        return tuple(c.strip().upper() for c in self.access_codes_raw.split(",") if c.strip())
+
+    @property
+    def gate_enabled(self) -> bool:
+        return bool(self.access_codes)
+
     @property
     def sqlalchemy_url(self) -> str:
         # SQLAlchemy needs the psycopg2 driver named explicitly.

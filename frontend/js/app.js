@@ -1,18 +1,22 @@
 /* Application shell: routing between the two views, data fetching, and the
    upload flow. All rendering lives in js/views/. */
 import { C, F } from "./tokens.js";
-import { api } from "./api.js";
+import { api, token, NeedsCodeError } from "./api.js";
 import { esc } from "./format.js";
 import { renderInsights } from "./views/insights.js";
 import { renderPipeline } from "./views/pipeline.js";
 import { uploadPanel, uploadInProgress, uploadResult } from "./views/upload.js";
-import { entryScreen, loadingScreen, emptyScreen, errorScreen } from "./views/shell.js";
+import { codeScreen, entryScreen, loadingScreen, emptyScreen,
+         errorScreen } from "./views/shell.js";
 
 const root = document.getElementById("app");
 const modal = document.getElementById("modal");
 
 const state = {
-  view: "entry",            // entry | insights | pipeline
+  view: "gate",             // gate | entry | insights | pipeline
+  codeError: "",
+  codeBusy: false,
+  pendingView: null,        // where to send them once a code is accepted
   report: null,
   loads: [],
   quarantine: [],
@@ -24,6 +28,11 @@ const state = {
 
 /* ------------------------------------------------------------------ render */
 function render() {
+  if (state.view === "gate") {
+    root.innerHTML = codeScreen({ error: state.codeError, busy: state.codeBusy });
+    document.getElementById("code-input")?.focus();
+    return;
+  }
   if (state.view === "entry") { root.innerHTML = entryScreen(); return; }
   if (state.view === "loading") { root.innerHTML = loadingScreen(); return; }
   if (state.view === "error") { root.innerHTML = errorScreen(state.error); return; }
@@ -74,7 +83,35 @@ async function loadAll(view) {
     if (report.is_empty) { state.view = "empty"; render(); return; }
     state.view = view; render();
   } catch (err) {
+    // An expired or revoked token sends them back to the gate, not to an
+    // error screen.
+    if (err instanceof NeedsCodeError) return requireCode(view);
     state.error = err.message; state.view = "error"; render();
+  }
+}
+
+function requireCode(nextView = null) {
+  state.pendingView = nextView;
+  state.codeError = "";
+  state.codeBusy = false;
+  state.view = "gate";
+  render();
+}
+
+async function submitCode(code) {
+  state.codeBusy = true; state.codeError = ""; render();
+  try {
+    await api.authenticate(code);
+    const next = state.pendingView;
+    state.pendingView = null;
+    state.codeBusy = false;
+    // Continue to whatever they were trying to open, if anything.
+    if (next) return loadAll(next);
+    state.view = "entry"; render();
+  } catch (err) {
+    state.codeBusy = false;
+    state.codeError = err.message;
+    render();
   }
 }
 
@@ -235,4 +272,24 @@ document.addEventListener("drop", (e) => {
   }
 });
 
-render();
+document.addEventListener("submit", (e) => {
+  if (e.target.dataset.codeForm) {
+    e.preventDefault();
+    submitCode(new FormData(e.target).get("code"));
+  }
+});
+
+async function start() {
+  try {
+    const { required } = await api.gateRequired();
+    // No gate configured, or a token from an earlier visit that still works.
+    if (!required || token.get()) { state.view = "entry"; render(); return; }
+  } catch {
+    // The gate check itself failed, so the API is unreachable. Say that
+    // rather than asking for a code nothing can verify.
+    state.error = "Could not reach the API."; state.view = "error"; render(); return;
+  }
+  requireCode();
+}
+
+start();

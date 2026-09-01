@@ -2,6 +2,37 @@
 import { C, F } from "../tokens.js";
 import { esc } from "../format.js";
 
+export function codeScreen({ error = "", busy = false } = {}) {
+  return `
+    <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:60px 24px">
+      <div style="width:100%;max-width:430px">
+        <div style="font:500 12px/1 ${F.mono};letter-spacing:.18em;text-transform:uppercase;
+                    margin-bottom:16px">Venmito</div>
+        <h1 style="margin:0 0 10px;font:300 34px/1.15 ${F.serif};letter-spacing:-.015em">
+          Enter your access code</h1>
+        <p style="margin:0 0 24px;font:400 13.5px/1.6 ${F.sans};color:${C.muted}">
+          This tool holds client data, so it is not open to the web. Use the code you
+          were given.</p>
+        <form data-code-form="1" style="display:flex;gap:10px">
+          <input id="code-input" name="code" autocomplete="off" autofocus
+                 placeholder="XXXX-XXXX" spellcheck="false"
+                 style="flex:1;padding:12px 14px;border:1px solid ${error ? C.error : C.hairHard};
+                        border-radius:2px;background:${C.surface};color:${C.ink};
+                        font:500 14px ${F.mono};letter-spacing:.08em;text-transform:uppercase">
+          <button type="submit" ${busy ? "disabled" : ""}
+                  style="padding:12px 20px;border:none;border-radius:2px;
+                         cursor:${busy ? "default" : "pointer"};
+                         background:${busy ? C.faint2 : C.ink};color:${C.surface};
+                         font:500 12.5px ${F.sans}">${busy ? "Checking…" : "Continue"}</button>
+        </form>
+        ${error ? `<p style="margin:12px 0 0;font:400 12.5px/1.5 ${F.sans};color:${C.error}">
+          ${esc(error)}</p>` : ""}
+        <p style="margin:26px 0 0;font:400 11.5px/1.6 ${F.sans};color:${C.faint}">
+          The code lasts twelve hours on this browser, then you will be asked again.</p>
+      </div>
+    </div>`;
+}
+
 export function entryScreen() {
   const card = (action, accent, eyebrow, title, blurb, list) => `
     <button data-action="${action}" style="flex:1;text-align:left;background:${C.surface};
