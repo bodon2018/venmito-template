@@ -64,9 +64,9 @@ endpoint sorts people files ahead of the rest within a single request.
 
 ```bash
 curl -X POST http://localhost:8000/uploads \
-  -F "files=@../data/people.json" -F "files=@../data/people.yml" \
-  -F "files=@../data/promotions.csv" -F "files=@../data/transactions.xml" \
-  -F "files=@../data/transfers.csv"
+  -F "files=@../recommendations/raw_data/people.json" -F "files=@../recommendations/raw_data/people.yml" \
+  -F "files=@../recommendations/raw_data/promotions.csv" -F "files=@../recommendations/raw_data/transactions.xml" \
+  -F "files=@../recommendations/raw_data/transfers.csv"
 ```
 
 ## Behaviour worth knowing

@@ -124,7 +124,7 @@ def _headlines(report: dict[str, Any]) -> list[dict[str, str]]:
             "title": "Risk",
             "text": (f"{behavioural} transfers carry behavioural tags "
                      f"(reciprocal round-trips, same-day fan-out, outlier amounts). "
-                     f"They are retained, not deleted -- this is the fraud signal."),
+                     f"They are retained as they can serve as fraud signal."),
         })
 
     quality = report["data_quality"]["counts"]

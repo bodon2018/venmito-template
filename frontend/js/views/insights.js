@@ -1,9 +1,10 @@
 /* Non-technical view. Renders entirely from GET /analysis -- no figure in
    here is hardcoded. Where a dataset is too small to support a chart, the
    copy says so rather than drawing an empty one. */
-import { C, F, SMALL_SAMPLE } from "../tokens.js";
+import { C, F, CHANNEL_HUES, SMALL_SAMPLE } from "../tokens.js";
 import { money, num, pct, monthLabel, dateLabel, MONTHS, esc } from "../format.js";
-import { lineChart, columnChart, barRow, heatGrid, stackedRail } from "../charts.js";
+import { lineChart, columnChart, barRow, heatGrid, stackedRail,
+         framed, niceScale, spacedLabels } from "../charts.js";
 
 const NAV = ["Findings", "Customers", "Stores", "Promotions",
              "Who to call", "Transfers", "Coverage"];
@@ -99,10 +100,19 @@ function customers(c) {
     </div>
     <h3 style="margin:34px 0 10px;font:500 12px/1 ${F.mono};letter-spacing:.1em;
                text-transform:uppercase;color:${C.muted2}">Age distribution</h3>
-    ${hist.length ? columnChart(hist.map((b) => b.clients), { height: 84 }) +
-      `<div style="display:flex;justify-content:space-between;margin-top:8px;
-                   font:400 10.5px/1 ${F.mono};color:${C.faint}">
-         <span>${hist[0].age_from}</span><span>${hist[hist.length - 1].age_to} years</span></div>`
+    ${hist.length ? (() => {
+        const sc = niceScale(Math.max(...hist.map((b) => b.clients)));
+        return framed({
+        plot: columnChart(hist.map((b) => b.clients), { height: "100%", max: sc.max }),
+        max: sc.max, tickCount: sc.count,
+        format: (v) => num(Math.round(v)),
+        height: 110,
+        axisLabel: "clients",
+        // Every other bucket, so the ages stay readable rather than colliding.
+        xLabels: hist.map((b, i) => ({ label: String(b.age_from), at: i / Math.max(hist.length - 1, 1) }))
+                     .filter((_, i) => i % 2 === 0),
+      }) + `<div style="margin-left:62px;margin-top:2px;font:400 10.5px/1 ${F.mono};
+                        color:${C.faint}">age in years</div>`; })()
       : tooLittle("No dates of birth available.")}`);
 }
 
@@ -162,12 +172,16 @@ function stores(s) {
     ${grid}
     <h3 style="margin:34px 0 12px;font:500 12px/1 ${F.mono};letter-spacing:.1em;
                text-transform:uppercase;color:${C.muted2}">Revenue by month</h3>
-    ${months.length > 1 ? lineChart(months.map((m) => m.revenue), { height: 120 }) +
-      `<div style="display:flex;justify-content:space-between;margin-top:8px;
-                   font:400 10.5px/1 ${F.mono};color:${C.faint}">
-        <span>${monthLabel(months[0].month)}</span>
-        <span>${monthLabel(months[months.length - 1].month)}</span></div>`
-      : tooLittle("Not enough months to draw a trend.")}
+    ${months.length > 1 ? (() => {
+        const sc = niceScale(Math.max(...months.map((m) => m.revenue)));
+        return framed({
+        plot: lineChart(months.map((m) => m.revenue), { height: 130, max: sc.max }),
+        max: sc.max, tickCount: sc.count,
+        format: (v) => money(v),
+        height: 130,
+        axisLabel: "revenue per month",
+        xLabels: spacedLabels(months, (m) => monthLabel(m.month), 6),
+      }); })() : tooLittle("Not enough months to draw a trend.")}
     <div style="margin-top:34px;padding:20px 22px;background:${C.canvas};border-radius:2px">
       <h3 style="margin:0 0 8px;font:500 12px/1 ${F.mono};letter-spacing:.1em;
                  text-transform:uppercase;color:${C.muted2}">How spend is spread</h3>
@@ -233,10 +247,15 @@ function promotions(p) {
         ${channels}
         <h3 style="margin:30px 0 10px;font:500 12px/1 ${F.mono};letter-spacing:.1em;
                    text-transform:uppercase;color:${C.muted2}">By calendar month</h3>
-        ${columnChart(byMonth.map((m) => m.response_rate), { height: 70 })}
-        <div style="display:flex;justify-content:space-between;margin-top:6px;
-                    font:400 10px/1 ${F.mono};color:${C.faint}">
-          ${MONTHS.map((m) => `<span>${m[0]}</span>`).join("")}</div>
+        ${framed({
+          plot: columnChart(byMonth.map((m) => m.response_rate), { height: "100%", max: 1 }),
+          max: 1, tickCount: 4,
+          format: (v) => pct(v, 0),
+          height: 88,
+          axisLabel: "accepted",
+          gutter: 42,
+          xLabels: MONTHS.map((m, i) => ({ label: m[0], at: i / 11 })),
+        })}
       </div>
     </div>
     <h3 style="margin:34px 0 4px;font:500 12px/1 ${F.mono};letter-spacing:.1em;
@@ -364,11 +383,16 @@ function transfers(t, outageMonths) {
     </div>
     <h3 style="margin:34px 0 12px;font:500 12px/1 ${F.mono};letter-spacing:.1em;
                text-transform:uppercase;color:${C.muted2}">Transfers by month</h3>
-    ${m.length > 1 ? lineChart(m.map((x) => x.transfers), { height: 110, bands }) +
-      `<div style="display:flex;justify-content:space-between;margin-top:8px;
-                   font:400 10.5px/1 ${F.mono};color:${C.faint}">
-        <span>${monthLabel(m[0].month)}</span>
-        <span>${monthLabel(m[m.length - 1].month)}</span></div>` +
+    ${m.length > 1 ? (() => {
+        const sc = niceScale(Math.max(...m.map((x) => x.transfers)));
+        return framed({
+        plot: lineChart(m.map((x) => x.transfers), { height: 120, bands, max: sc.max }),
+        max: sc.max, tickCount: sc.count,
+        format: (v) => num(Math.round(v)),
+        height: 120,
+        axisLabel: "transfers per month",
+        xLabels: spacedLabels(m, (x) => monthLabel(x.month), 6),
+      }); })() +
       (bands.length ? `<p style="margin:10px 0 0;font:400 11.5px/1.5 ${F.sans};color:${C.faint}">
         Shaded months are days where the source file arrived with empty rows —
         ${outageMonths} in total. Counts for those months are understated.</p>` : "")
@@ -376,16 +400,54 @@ function transfers(t, outageMonths) {
 }
 
 /* ------------------------------------------------------------- coverage */
-function coverage(cv) {
+function coverage(r) {
+  const cv = r.channel_coverage;
   if (!cv.by_channel_count.length) {
     return section("coverage", "Coverage", "How much we know about each client", null,
       tooLittle("No clients have been uploaded yet."));
   }
   const total = cv.by_channel_count.reduce((s, x) => s + x.clients, 0);
   const colours = [C.faint2, C.business, C.warn, C.ok];
+
+  // The rail encodes how many of the three channels a client appears in, not
+  // which -- so the channels themselves get their own named breakdown below.
+  const channels = [
+    { name: "Promotions", clients: r.promotions.overall.clients_targeted || 0,
+      colour: CHANNEL_HUES.promotions },
+    { name: "Store purchases", clients: r.stores.spend_concentration.buyers || 0,
+      colour: CHANNEL_HUES.purchases },
+    { name: "Transfers", clients: r.transfers.participation.participants || 0,
+      colour: CHANNEL_HUES.transfers },
+  ];
+  const maxChannel = Math.max(...channels.map((c) => c.clients), 1);
+
   return section("coverage", "Coverage", "How much we know about each client",
-    "Each client can appear in three places: offers, store purchases, and transfers.", `
-    ${stackedRail(cv.by_channel_count.map((x, i) => ({
+    "Each client can appear in three places: promotions, store purchases, and transfers.", `
+    <h3 style="margin:0 0 4px;font:500 12px/1 ${F.mono};letter-spacing:.1em;
+               text-transform:uppercase;color:${C.muted2}">Clients reached, by channel</h3>
+    <p style="margin:0 0 10px;font:400 11.5px/1.4 ${F.sans};color:${C.faint}">
+      A client can appear in more than one, so these overlap.</p>
+    ${channels.map((c) => `
+      <div class="vm-bar">
+        <span class="vm-bar-label vm-bar-label-wide"
+              style="display:flex;align-items:center;gap:8px;font:400 12.5px/1.3 ${F.sans}">
+          <span style="width:10px;height:10px;flex:none;border-radius:1px;
+                       background:${c.colour}"></span>${esc(c.name)}</span>
+        <span class="vm-bar-track" style="height:9px;background:${C.hairSoft};
+                     border-radius:1px;overflow:hidden">
+          <span style="display:block;height:100%;
+                       width:${((c.clients / maxChannel) * 100).toFixed(1)}%;
+                       background:${c.colour}"></span></span>
+        <span class="vm-bar-value" style="font:500 12px/1 ${F.mono}">${num(c.clients)}</span>
+        <span class="vm-bar-note" style="font:400 11px/1 ${F.mono};color:${C.faint}">
+          ${pct(c.clients / (total || 1), 0)}</span>
+      </div>`).join("")}
+
+    <h3 style="margin:30px 0 4px;font:500 12px/1 ${F.mono};letter-spacing:.1em;
+               text-transform:uppercase;color:${C.muted2}">How many channels per client</h3>
+    <p style="margin:0 0 10px;font:400 11.5px/1.4 ${F.sans};color:${C.faint}">
+      Every client counted once, by how many of the three they appear in.</p>
+    ${stackedRail(cv.by_channel_count.map((x) => ({
       label: `${x.channels} of 3`, value: x.clients, colour: colours[x.channels] ?? C.faint2,
     })))}
     <div style="display:flex;gap:26px;margin-top:14px;flex-wrap:wrap">
@@ -393,7 +455,8 @@ function coverage(cv) {
         <span style="display:flex;align-items:center;gap:8px;font:400 12px ${F.sans}">
           <span style="width:10px;height:10px;border-radius:1px;
                        background:${colours[x.channels] ?? C.faint2}"></span>
-          ${x.channels} of 3 — ${num(x.clients)} clients (${pct(x.pct / 100, 0)})</span>`).join("")}
+          ${x.channels === 0 ? "In none" : `In ${x.channels} of 3`} — ${num(x.clients)} clients
+          (${pct(x.pct / 100, 0)})</span>`).join("")}
     </div>
     <p style="margin:22px 0 0;font:400 13.5px/1.6 ${F.sans};max-width:70ch">
       ${num(cv.invisible_clients)} of ${num(total)} clients show no activity at all — no offer,
@@ -440,7 +503,7 @@ export function renderInsights(r) {
       ${promotions(r.promotions)}
       ${whoToCall(r.turn_no_into_yes)}
       ${transfers(r.transfers, outageMonths)}
-      ${coverage(r.channel_coverage)}
+      ${coverage(r)}
       <footer class="vm-pad" style="padding-top:30px;padding-bottom:60px;
               font:400 11.5px/1.6 ${F.sans};color:${C.faint}">
         Every figure on this page is computed from the data currently in the database.

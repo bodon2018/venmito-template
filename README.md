@@ -2,11 +2,13 @@
 
 **Herminio Bodon** · bodon2018@gmail.com
 
-A data engineering solution for Venmito: five source files in four formats, conformed
-into one Postgres database, with insights derived from it and served through two web
-views — one for non-technical staff, one for the technical team.
+Venmito came to us with a problem of fragmented data spread across five source files in four formats. I analyzed the data, developed a set of recommendations, and implemented a solution that consolidated their fragmented data into a single PostgreSQL database, with insights derived from it and served through two web views, one for non-technical staff and one for the technical team.
 
-Live: https://venmito-hb-interview.vercel.app/
+Tools used for analysis, design, and implementation: VS Code, Python, Jupyter Notebook, pen and paper for sketching system design, and AI-assisted development and frontend design via Claude Design and Claude AI (Sonnet and Opus -Low Effort).
+
+Recommendations: 
+
+Live Solution: https://venmito-hb-interview.vercel.app/
 
 **An access code is required to enter the web app.** The tool holds client
 names, emails, phone numbers and dates of birth, so it is not open to the web.
@@ -33,7 +35,7 @@ every token issued from it.
 
 ## 1. Diagnostics 
 
-I first reviewed the data files manually, then constructed a Jupyter notebook to confirm the identified problems. The notebooks are in the `diagnostics/` folder, and system design decisions are based on the findings from these analyses.
+I first reviewed the data files manually, then constructed a Jupyter notebook to confirm the identified problems. The notebooks are in the `recommendations/diagnostics/` folder, and system design decisions are based on the findings from these analyses.
 
 
 | Notebook | What it does |
@@ -182,9 +184,11 @@ Through the UI (Upload button in either view), or:
 
 ```bash
 curl -X POST http://localhost:8000/uploads \
-  -F "files=@data/people.json" -F "files=@data/people.yml" \
-  -F "files=@data/promotions.csv" -F "files=@data/transactions.xml" \
-  -F "files=@data/transfers.csv"
+  -F "files=@recommendations/raw_data/people.json" \
+  -F "files=@recommendations/raw_data/people.yml" \
+  -F "files=@recommendations/raw_data/promotions.csv" \
+  -F "files=@recommendations/raw_data/transactions.xml" \
+  -F "files=@recommendations/raw_data/transfers.csv"
 ```
 
 People files load first automatically — the other entities resolve against them.
@@ -205,11 +209,12 @@ the analysis tests skip cleanly if `DATABASE_URL` is unset.
 
 ```bash
 pip install pandas matplotlib scipy statsmodels
-jupyter notebook diagnostics/
+jupyter notebook recommendations/diagnostics/
 ```
 
 `data_diagnostics.ipynb` needs nothing beyond the standard library. Run
-`data_cleaning.ipynb` before `data_analysis.ipynb` — the latter reads its output.
+`data_cleaning.ipynb` before `data_analysis.ipynb` — the latter reads its output
+from `recommendations/data_clean/`.
 
 ---
 
@@ -291,8 +296,10 @@ For anything beyond a prototype, run the API on a host with a persistent process
 ## 7. Layout
 
 ```
-diagnostics/     the notebooks — understanding the data before building
-data/            the five source files, unmodified
+recommendations/
+  raw_data/      the five source files exactly as provided, unmodified
+  diagnostics/   the notebooks — understanding the data before building
+  data_clean/    conformed CSVs written by data_cleaning.ipynb (git-ignored)
 backend/
   app/
     ingestion/   reading files; one adapter per format
@@ -301,7 +308,7 @@ backend/
     analysis/    read-only aggregation and the report
     api/routes/  uploads, loads, analysis, health
   migrations/    schema, in order
-  tests/         36 tests
+  tests/         48 tests
 frontend/        plain JS; both views
 api/             Vercel entry point
 ```
@@ -388,9 +395,9 @@ The current deployment is sized for a prototype: one Postgres database, an API
 running as a serverless function, and files uploaded through a browser. For scaling the solution we would have to address the follwoing:
 
 
-### What breaks first
+### Priorities
 
-| Limit | Where it bites |
+| Limit | Where it becomes a problem |
 |---|---|
 | Vercel's 30s function timeout | A people upload re-merges the whole population on every file. Two seconds today; linear in the number of people. |
 | 4.5 MB request body | Anything larger than a sample file cannot be uploaded at all. |
@@ -527,14 +534,16 @@ curl http://localhost:8000/health
 
 ```bash
 curl -X POST http://localhost:8000/uploads \
-  -F "files=@data/people.json" -F "files=@data/people.yml" \
-  -F "files=@data/promotions.csv" -F "files=@data/transactions.xml" \
-  -F "files=@data/transfers.csv"
+  -F "files=@recommendations/raw_data/people.json" \
+  -F "files=@recommendations/raw_data/people.yml" \
+  -F "files=@recommendations/raw_data/promotions.csv" \
+  -F "files=@recommendations/raw_data/transactions.xml" \
+  -F "files=@recommendations/raw_data/transfers.csv"
 ```
 
 ### Notebooks
 
 ```bash
 python3 -m pip install pandas matplotlib scipy statsmodels jupyter
-python3 -m jupyter notebook diagnostics/
+python3 -m jupyter notebook recommendations/diagnostics/
 ```

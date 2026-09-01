@@ -38,6 +38,16 @@ export const FLAG_HUES = {
   ambiguous_998:   "oklch(0.55 0.08 180)",
 };
 
+/* The three channels a client can appear in. The design carries two accents
+   only -- rust for business, steel blue for pipeline -- so rather than
+   inventing hues these are three steps of the business accent. One hue,
+   ordered, each with its own swatch and label. */
+export const CHANNEL_HUES = {
+  promotions: "oklch(0.42 0.13 45)",
+  purchases:  "oklch(0.52 0.12 45)",
+  transfers:  "oklch(0.66 0.09 45)",
+};
+
 /* Campaigns below this many offers are drawn muted: a 58% on 13 offers must
    not read like a 52% on 31. */
 export const SMALL_SAMPLE = 20;
