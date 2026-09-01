@@ -25,6 +25,7 @@ def list_quarantine(limit: int = 200, session: Session = Depends(get_session)) -
     rows = session.execute(text("""
         select q.id, l.filename, q.entity, q.reason, q.source_row, q.payload, q.created_at
           from ops.quarantine q join ops.loads l using (load_id)
+         where not l.superseded
          order by q.created_at desc limit :limit
     """), {"limit": limit}).mappings().all()
     return [dict(r) for r in rows]

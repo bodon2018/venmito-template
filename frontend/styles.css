@@ -1,0 +1,26 @@
+/* Venmito mockups — global styles.
+   Everything else is inline on the elements (one-file handoff, no class system).
+
+   Palette
+     canvas            #eeebe4
+     surface           #fffdfa
+     ink               #1b1917
+     ink muted         #57534c / #6b665e
+     ink faint         #8a8479 / #b3ada1
+     hairline          rgba(27,25,23,.12) — .08 inside tables, .16-.24 for section rules
+     business accent   oklch(0.52 0.12 45)    (warm rust — insights view)
+     technical accent  oklch(0.52 0.12 215)   (steel blue — pipeline view)
+     ok                oklch(0.62 0.14 145)
+     warn              oklch(0.62 0.13 75)
+     error             oklch(0.55 0.15 25)
+
+   Type
+     headings / big figures  Newsreader 300-400
+     body / labels           Public Sans 300-500
+     all numbers, ids, paths IBM Plex Mono 400-500
+*/
+body{margin:0;background:#eeebe4;font-family:'Public Sans',system-ui,sans-serif;color:#1b1917;-webkit-font-smoothing:antialiased}
+a{color:oklch(0.52 0.12 45);text-decoration:none}
+a:hover{color:oklch(0.44 0.13 45)}
+@keyframes shimmer{0%{background-position:-600px 0}100%{background-position:600px 0}}
+@keyframes spin{to{transform:rotate(360deg)}}

@@ -300,8 +300,15 @@ select (select count(*) from clean.transactions where is_orphan)          as orp
        (select count(*) from clean.transaction_items where needs_review)  as items_needing_review,
        (select count(*) from clean.transfers where is_null_row)           as null_transfers,
        (select count(*) from clean.transfers where not is_clean)          as flagged_transfers,
+       -- flagged_transfers includes the empty rows; this is the count of
+       -- rows carrying an actual behavioural tag, which is what the UI shows
+       (select count(*) from clean.transfers
+         where not is_clean and not is_null_row)                          as behavioural_flagged,
        (select count(*) from clean.people where is_synthetic)             as synthetic_people,
-       (select count(*) from ops.quarantine)                              as quarantined_rows
+       -- only rows from loads that are still active: a superseded load's
+       -- quarantine is history, not a current problem
+       (select count(*) from ops.quarantine q join ops.loads l using (load_id)
+         where not l.superseded)                                          as quarantined_rows
 """
 
 OUTAGE_DATES = """

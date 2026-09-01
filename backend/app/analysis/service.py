@@ -113,11 +113,10 @@ def _headlines(report: dict[str, Any]) -> list[dict[str, str]]:
     risk = report["transfer_risk"]
     if risk["flagged"]:
         # Count from the flag totals, not from the truncated sample list.
-        flagged_total = report["data_quality"]["counts"]["flagged_transfers"]
-        null_rows = report["data_quality"]["counts"]["null_transfers"]
+        behavioural = report["data_quality"]["counts"]["behavioural_flagged"]
         lines.append({
             "title": "Risk",
-            "text": (f"{flagged_total - null_rows} transfers carry behavioural tags "
+            "text": (f"{behavioural} transfers carry behavioural tags "
                      f"(reciprocal round-trips, same-day fan-out, outlier amounts). "
                      f"They are retained, not deleted -- this is the fraud signal."),
         })
