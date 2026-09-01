@@ -5,11 +5,18 @@ decisions that will change, and changing one should not require a code diff.
 """
 from __future__ import annotations
 
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Absolute, so the app finds its settings whether it is launched from
+# backend/ (uvicorn) or from the repo root (the Vercel entry point).
+# On Vercel there is no .env at all -- the values come from the dashboard.
+ENV_FILE = Path(__file__).resolve().parents[1] / ".env"
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(env_file=ENV_FILE, extra="ignore")
 
     # Supabase -> Project Settings -> Database -> Connection string (URI).
     # Use the pooled connection string for an app server.

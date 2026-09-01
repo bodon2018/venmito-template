@@ -1,10 +1,12 @@
 """Database engine and session handling."""
 from __future__ import annotations
 
+import os
 from collections.abc import Iterator
 from contextlib import contextmanager
 
 from sqlalchemy import create_engine, text
+from sqlalchemy.pool import NullPool
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -26,9 +28,15 @@ def get_engine() -> Engine:
         # row. A people upload writes ~2,600 rows, which over a hosted
         # connection means ~2,600 round trips and a request that looks hung.
         # Batching folds them into a handful of multi-row statements.
+        # On Vercel each request runs in a fresh function, so a pool would
+        # hold connections that never get reused and would exhaust Supabase's
+        # limit. NullPool opens and closes one connection per request instead.
+        serverless = os.environ.get("VENMITO_SERVERLESS") == "1"
+        pool_args = {"poolclass": NullPool} if serverless else {"pool_pre_ping": True}
+
         _engine = create_engine(
             settings.sqlalchemy_url,
-            pool_pre_ping=True,
+            **pool_args,
             future=True,
             executemany_mode="values_plus_batch",
             executemany_batch_page_size=1000,
